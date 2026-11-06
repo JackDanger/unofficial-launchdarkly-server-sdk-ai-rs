@@ -167,11 +167,62 @@ impl OpenAiCompatibleRunner {
                 "response_format".to_string(),
                 json!({
                     "type": "json_schema",
-                    "json_schema": { "name": STRUCTURED_OUTPUT_NAME, "schema": schema, "strict": true }
+                    "json_schema": {
+                        "name": STRUCTURED_OUTPUT_NAME,
+                        "schema": reasoning_first(schema),
+                        "strict": true
+                    }
                 }),
             );
         }
         Value::Object(body)
+    }
+}
+
+/// Moves every `reasoning` property ahead of its siblings, recursively.
+///
+/// Constrained decoders emit properties in schema order, so a judge schema that lists
+/// `score` before `reasoning` makes the model commit to a number before it has reasoned,
+/// and it then writes reasoning that contradicts its own score. The JavaScript SDK's
+/// schema lists `score` first; reordering here keeps that schema while getting the
+/// reasoning-then-score generation order on every endpoint.
+pub fn reasoning_first(schema: &Value) -> Value {
+    match schema {
+        Value::Object(map) => {
+            let mut out = serde_json::Map::new();
+            for (key, value) in map {
+                let value = match key.as_str() {
+                    "properties" => match value {
+                        Value::Object(props) => {
+                            let mut ordered = serde_json::Map::new();
+                            if let Some(reasoning) = props.get("reasoning") {
+                                ordered.insert("reasoning".to_string(), reasoning_first(reasoning));
+                            }
+                            for (name, prop) in props {
+                                if name != "reasoning" {
+                                    ordered.insert(name.clone(), reasoning_first(prop));
+                                }
+                            }
+                            Value::Object(ordered)
+                        }
+                        other => reasoning_first(other),
+                    },
+                    "required" => match value {
+                        Value::Array(names) => {
+                            let (first, rest): (Vec<_>, Vec<_>) =
+                                names.iter().cloned().partition(|n| n == "reasoning");
+                            Value::Array(first.into_iter().chain(rest).collect())
+                        }
+                        other => other.clone(),
+                    },
+                    _ => reasoning_first(value),
+                };
+                out.insert(key.clone(), value);
+            }
+            Value::Object(out)
+        }
+        Value::Array(items) => Value::Array(items.iter().map(reasoning_first).collect()),
+        other => other.clone(),
     }
 }
 

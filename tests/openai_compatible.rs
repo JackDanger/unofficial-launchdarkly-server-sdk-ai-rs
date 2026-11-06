@@ -208,7 +208,7 @@ async fn requests_json_schema_structured_output_and_parses_it() {
         server.requests()[0].body["response_format"],
         json!({
             "type": "json_schema",
-            "json_schema": {"name": STRUCTURED_OUTPUT_NAME, "schema": judge::evaluation_schema(), "strict": true}
+            "json_schema": {"name": STRUCTURED_OUTPUT_NAME, "schema": unofficial_launchdarkly_server_sdk_ai::openai_compatible::reasoning_first(judge::evaluation_schema()), "strict": true}
         })
     );
 }
@@ -358,4 +358,26 @@ async fn judges_a_managed_model_end_to_end_against_a_self_hosted_endpoint() {
     assert_eq!(data["judgeConfigKey"], json!("relevance"));
     assert_eq!(data["version"], json!(3));
     assert_eq!(ld.tracks_for("$ld:ai:tokens:total").len(), 2);
+}
+
+#[test]
+fn judge_schemas_ask_for_reasoning_before_the_score() {
+    let ordered = unofficial_launchdarkly_server_sdk_ai::openai_compatible::reasoning_first(
+        judge::evaluation_schema(),
+    );
+    let names: Vec<&String> = ordered["properties"].as_object().unwrap().keys().collect();
+    assert_eq!(names, ["reasoning", "score"]);
+    assert_eq!(ordered["required"], json!(["reasoning", "score"]));
+    let nested = unofficial_launchdarkly_server_sdk_ai::openai_compatible::reasoning_first(
+        &json!({
+            "type": "array",
+            "items": {"type": "object", "properties": {"score": {"type": "number"}, "reasoning": {"type": "string"}}}
+        }),
+    );
+    let nested_names: Vec<&String> = nested["items"]["properties"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .collect();
+    assert_eq!(nested_names, ["reasoning", "score"]);
 }
