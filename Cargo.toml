@@ -1,0 +1,46 @@
+[package]
+name = "unofficial-launchdarkly-server-sdk-ai"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97"
+authors = ["Jack Danger <github@jackdanger.com>"]
+license = "Apache-2.0"
+description = "Unofficial, community Rust port of LaunchDarkly's server-side AI SDK (@launchdarkly/server-sdk-ai): AI Configs, trackers, judges and agent graphs. Not affiliated with LaunchDarkly."
+repository = "https://github.com/JackDanger/unofficial-launchdarkly-server-sdk-ai-rs"
+readme = "README.md"
+keywords = ["launchdarkly", "ai", "llm", "feature-flags", "unofficial"]
+categories = ["api-bindings", "development-tools"]
+publish = false
+exclude = ["/target", "/.github"]
+
+[lib]
+name = "unofficial_launchdarkly_server_sdk_ai"
+
+[features]
+default = ["ld-client"]
+ld-client = ["dep:launchdarkly-server-sdk"]
+openai-compatible = ["dep:reqwest"]
+preserve-order = ["serde_json/preserve_order"]
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.22"
+fastrand = "2"
+futures = { version = "0.3", default-features = false, features = ["std", "executor"] }
+indexmap = { version = "2", features = ["serde"] }
+launchdarkly-server-sdk = { version = "3.3", optional = true, default-features = false }
+launchdarkly-server-sdk-evaluation = { version = "2.2", default-features = false }
+log = "0.4"
+reqwest = { version = "0.12", optional = true, default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt"] }
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "sync"] }
+
+[package.metadata.docs.rs]
+all-features = true

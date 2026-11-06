@@ -1,0 +1,338 @@
+{
+  "view": {
+    "name": "World",
+    "n": 42,
+    "f": 0.7,
+    "whole": 3,
+    "neg": -1.5,
+    "big": 1e+21,
+    "tiny": 1.5e-7,
+    "zero": 0,
+    "t": true,
+    "no": false,
+    "nil": null,
+    "empty": "",
+    "html": "<b>&\"'</b>",
+    "list": [
+      {
+        "v": 1
+      },
+      {
+        "v": 2
+      },
+      {
+        "v": 3
+      }
+    ],
+    "strs": [
+      "x",
+      "y"
+    ],
+    "nested": [
+      [
+        1,
+        2
+      ],
+      [
+        3
+      ]
+    ],
+    "mixed": [
+      1,
+      null,
+      "z",
+      {
+        "a": 1
+      }
+    ],
+    "obj": {
+      "a": "A",
+      "b": {
+        "c": "C"
+      }
+    },
+    "emptyList": [],
+    "emptyObj": {},
+    "ldctx": {
+      "kind": "user",
+      "key": "user-123",
+      "name": "Sandy",
+      "address": {
+        "city": "Oakland",
+        "zip": 94607
+      },
+      "tags": [
+        "a",
+        "b"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "template": "Hello {{name}}!",
+      "expected": "Hello World!"
+    },
+    {
+      "template": "{{ name }}",
+      "expected": "World"
+    },
+    {
+      "template": "{{{html}}}",
+      "expected": "<b>&\"'</b>"
+    },
+    {
+      "template": "{{&html}}",
+      "expected": "<b>&\"'</b>"
+    },
+    {
+      "template": "{{html}}",
+      "expected": "<b>&\"'</b>"
+    },
+    {
+      "template": "{{missing}}|",
+      "expected": "|"
+    },
+    {
+      "template": "{{ldctx.key}}",
+      "expected": "user-123"
+    },
+    {
+      "template": "{{ldctx.address.city}} {{ldctx.address.zip}}",
+      "expected": "Oakland 94607"
+    },
+    {
+      "template": "{{ldctx.missing.deep}}x",
+      "expected": "x"
+    },
+    {
+      "template": "{{n}} {{f}} {{whole}} {{neg}} {{big}} {{tiny}} {{zero}}",
+      "expected": "42 0.7 3 -1.5 1e+21 1.5e-7 0"
+    },
+    {
+      "template": "{{t}} {{no}} {{nil}} [{{empty}}]",
+      "expected": "true false  []"
+    },
+    {
+      "template": "{{strs}} {{nested}} {{mixed}} {{obj}} {{emptyList}} {{emptyObj}} {{ldctx}}",
+      "expected": "x,y 1,2,3 1,,z,[object Object] [object Object]  [object Object] [object Object]"
+    },
+    {
+      "template": "{{#list}}<{{v}}>{{/list}}",
+      "expected": "<1><2><3>"
+    },
+    {
+      "template": "{{#strs}}{{.}},{{/strs}}",
+      "expected": "x,y,"
+    },
+    {
+      "template": "{{#obj}}{{a}}{{b.c}}{{/obj}}",
+      "expected": "AC"
+    },
+    {
+      "template": "{{#obj.b}}{{c}}{{/obj.b}}",
+      "expected": "C"
+    },
+    {
+      "template": "{{#t}}yes{{/t}}{{#no}}no{{/no}}",
+      "expected": "yes"
+    },
+    {
+      "template": "{{#zero}}z{{/zero}}{{^zero}}notz{{/zero}}",
+      "expected": "notz"
+    },
+    {
+      "template": "{{#empty}}e{{/empty}}{{^empty}}ne{{/empty}}",
+      "expected": "ne"
+    },
+    {
+      "template": "{{^emptyList}}none{{/emptyList}}",
+      "expected": "none"
+    },
+    {
+      "template": "{{#emptyList}}x{{/emptyList}}",
+      "expected": ""
+    },
+    {
+      "template": "{{^emptyObj}}eo{{/emptyObj}}{{#emptyObj}}EO{{/emptyObj}}",
+      "expected": "EO"
+    },
+    {
+      "template": "{{#n}}{{.}}!{{/n}}",
+      "expected": "42!"
+    },
+    {
+      "template": "{{#name}}[{{.}}|{{length}}]{{/name}}",
+      "expected": "[World|]"
+    },
+    {
+      "template": "{{#list}}{{name}}:{{v}} {{/list}}",
+      "expected": "World:1 World:2 World:3 "
+    },
+    {
+      "template": "{{#list}}{{ldctx.key}}{{/list}}",
+      "expected": "user-123user-123user-123"
+    },
+    {
+      "template": "{{#nested}}({{#.}}{{.}}{{/.}}){{/nested}}",
+      "expected": "(12)(3)"
+    },
+    {
+      "template": "a\n{{#list}}\n- {{v}}\n{{/list}}\nb",
+      "expected": "a\n- 1\n- 2\n- 3\nb"
+    },
+    {
+      "template": "a\n  {{#list}}  \n  - {{v}}\n  {{/list}}  \nb",
+      "expected": "a\n  - 1\n  - 2\n  - 3\nb"
+    },
+    {
+      "template": "  {{#t}}\n  in\n  {{/t}}\n",
+      "expected": "  in\n"
+    },
+    {
+      "template": "{{#t}}\nline\n{{/t}}",
+      "expected": "line\n"
+    },
+    {
+      "template": "x {{#t}}\ny{{/t}} z",
+      "expected": "x \ny z"
+    },
+    {
+      "template": "start\n{{! a comment }}\nend",
+      "expected": "start\nend"
+    },
+    {
+      "template": "start {{! inline }} end",
+      "expected": "start  end"
+    },
+    {
+      "template": "{{!\nmultiline\ncomment\n}}after",
+      "expected": "after"
+    },
+    {
+      "template": "pre\n{{> partial}}\npost",
+      "expected": "pre\npost"
+    },
+    {
+      "template": "pre {{> partial}} post",
+      "expected": "pre  post"
+    },
+    {
+      "template": "{{=<% %>=}}<% name %> {{name}}",
+      "expected": "World {{name}}"
+    },
+    {
+      "template": "{{=<% %>=}}\n<%#t%>T<%/t%>\n<%={{ }}=%>{{name}}",
+      "expected": "T\nWorld"
+    },
+    {
+      "template": "{{= | | =}}|name|",
+      "expected": "World"
+    },
+    {
+      "template": "line1\r\n{{#t}}\r\nin\r\n{{/t}}\r\nline2",
+      "expected": "line1\r\nin\r\nline2"
+    },
+    {
+      "template": "{{strs.length}} {{name.length}} {{strs.1}} {{name.0}} {{list.1.v}}",
+      "expected": "2 5 y W 2"
+    },
+    {
+      "template": "{{list.length}}",
+      "expected": "3"
+    },
+    {
+      "template": "{{#strs.length}}has{{/strs.length}}",
+      "expected": "has"
+    },
+    {
+      "template": "{{.}}",
+      "expected": "[object Object]"
+    },
+    {
+      "template": "{{}}",
+      "expected": ""
+    },
+    {
+      "template": "{{ldctx.tags}}",
+      "expected": "a,b"
+    },
+    {
+      "template": "{{#ldctx.tags}}#{{.}}{{/ldctx.tags}}",
+      "expected": "#a#b"
+    },
+    {
+      "template": "no tags at all",
+      "expected": "no tags at all"
+    },
+    {
+      "template": "",
+      "expected": ""
+    },
+    {
+      "template": "   ",
+      "expected": "   "
+    },
+    {
+      "template": "\n\n",
+      "expected": "\n\n"
+    },
+    {
+      "template": "{{#list}}\n\n{{/list}}",
+      "expected": "\n\n\n"
+    },
+    {
+      "template": "{{name}}\n{{#t}}\n{{name}}\n{{/t}}\n",
+      "expected": "World\nWorld\n"
+    },
+    {
+      "template": "MESSAGE: {{message_history}} / {{response_to_evaluate}}",
+      "expected": "MESSAGE:  / "
+    },
+    {
+      "template": "Héllo {{name}} — ünïcödé {{ldctx.name}}",
+      "expected": "Héllo World — ünïcödé Sandy"
+    },
+    {
+      "template": "{{#obj}}{{#b}}{{c}}{{a}}{{/b}}{{/obj}}",
+      "expected": "CA"
+    },
+    {
+      "template": "{{^nil}}nil-inv{{/nil}}{{^missing}}missing-inv{{/missing}}",
+      "expected": "nil-invmissing-inv"
+    },
+    {
+      "template": "{{# list }}{{ v }}{{/ list }}",
+      "expected": "123"
+    },
+    {
+      "template": "{{neg.length}}|{{n.toFixed}}|",
+      "expected": "||"
+    }
+  ],
+  "errors": [
+    {
+      "template": "{{#a}}x",
+      "error": true
+    },
+    {
+      "template": "{{/a}}",
+      "error": true
+    },
+    {
+      "template": "{{#a}}{{/b}}",
+      "error": true
+    },
+    {
+      "template": "{{a",
+      "error": true
+    },
+    {
+      "template": "x {{name",
+      "error": true
+    },
+    {
+      "template": "{{=<%=}}",
+      "error": true
+    }
+  ]
+}
