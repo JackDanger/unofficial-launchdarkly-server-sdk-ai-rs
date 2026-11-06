@@ -61,11 +61,17 @@ impl LdAgentGraphFlagValue {
     pub fn from_value(value: &Value) -> Self {
         let empty = Map::new();
         let object = value.as_object().unwrap_or(&empty);
-        let ld_meta = object.get("_ldMeta").and_then(Value::as_object).map(|m| LdAgentGraphMeta {
-            variation_key: m.get("variationKey").and_then(Value::as_str).map(str::to_string),
-            version: crate::config::utils::as_version(m.get("version")),
-            enabled: m.get("enabled").and_then(Value::as_bool),
-        });
+        let ld_meta = object
+            .get("_ldMeta")
+            .and_then(Value::as_object)
+            .map(|m| LdAgentGraphMeta {
+                variation_key: m
+                    .get("variationKey")
+                    .and_then(Value::as_str)
+                    .map(str::to_string),
+                version: crate::config::utils::as_version(m.get("version")),
+                enabled: m.get("enabled").and_then(Value::as_bool),
+            });
         let edges = object.get("edges").and_then(Value::as_object).map(|edges| {
             edges
                 .iter()

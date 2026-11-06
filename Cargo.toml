@@ -39,8 +39,13 @@ tokio = { version = "1", features = ["rt"] }
 uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
+launchdarkly-server-sdk = "3.3"
 serde_json = { version = "1", features = ["preserve_order"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "sync"] }
 
 [package.metadata.docs.rs]
 all-features = true
+
+[[example]]
+name = "create_judge"
+required-features = ["ld-client", "openai-compatible"]

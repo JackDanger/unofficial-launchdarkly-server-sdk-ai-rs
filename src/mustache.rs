@@ -369,7 +369,10 @@ impl ContextStack<'_> {
             let (hit, value) = if dotted {
                 lookup_dotted(&current.view, name)
             } else {
-                (has_property(&current.view, name), property(&current.view, name))
+                (
+                    has_property(&current.view, name),
+                    property(&current.view, name),
+                )
             };
             if hit {
                 return value;
@@ -411,7 +414,9 @@ fn has_property(value: &Value, name: &str) -> bool {
 
 fn primitive_has_own_property(value: &Value, name: &str) -> bool {
     match value {
-        Value::String(s) => name == "length" || array_index(name, s.encode_utf16().count()).is_some(),
+        Value::String(s) => {
+            name == "length" || array_index(name, s.encode_utf16().count()).is_some()
+        }
         _ => false,
     }
 }
@@ -571,7 +576,10 @@ mod tests {
 
     #[test]
     fn renders_variables_without_html_escaping() {
-        assert_eq!(r("Hello {{name}}", json!({"name": "<b>&\"'"})), "Hello <b>&\"'");
+        assert_eq!(
+            r("Hello {{name}}", json!({"name": "<b>&\"'"})),
+            "Hello <b>&\"'"
+        );
         assert_eq!(r("{{{name}}} {{&name}}", json!({"name": "<i>"})), "<i> <i>");
     }
 
@@ -582,15 +590,22 @@ mod tests {
 
     #[test]
     fn nested_dotted_lookup() {
-        let view = json!({"ldctx": {"key": "user-1", "kind": "user", "address": {"city": "Oakland"}}});
-        assert_eq!(r("{{ldctx.key}} in {{ ldctx.address.city }}", view), "user-1 in Oakland");
+        let view =
+            json!({"ldctx": {"key": "user-1", "kind": "user", "address": {"city": "Oakland"}}});
+        assert_eq!(
+            r("{{ldctx.key}} in {{ ldctx.address.city }}", view),
+            "user-1 in Oakland"
+        );
     }
 
     #[test]
     fn stringifies_like_javascript() {
         let view = json!({"i": 42, "f": 0.7, "whole": 3.0, "t": true, "n": null, "a": [1, null, "x", [2, 3]], "o": {"k": 1}, "big": 1e21, "tiny": 1.5e-7});
         assert_eq!(
-            r("{{i}}|{{f}}|{{whole}}|{{t}}|{{n}}|{{a}}|{{o}}|{{big}}|{{tiny}}", view),
+            r(
+                "{{i}}|{{f}}|{{whole}}|{{t}}|{{n}}|{{a}}|{{o}}|{{big}}|{{tiny}}",
+                view
+            ),
             "42|0.7|3|true||1,,x,2,3|[object Object]|1e+21|1.5e-7"
         );
     }
@@ -599,21 +614,39 @@ mod tests {
     fn sections_and_inverted_sections() {
         let view = json!({"items": [{"n": 1}, {"n": 2}], "yes": true, "no": false, "zero": 0, "empty": [], "obj": {"x": "y"}});
         assert_eq!(r("{{#items}}<{{n}}>{{/items}}", view.clone()), "<1><2>");
-        assert_eq!(r("{{#yes}}Y{{/yes}}{{#no}}N{{/no}}{{#zero}}Z{{/zero}}", view.clone()), "Y");
-        assert_eq!(r("{{^no}}not{{/no}}{{^empty}}none{{/empty}}{{^yes}}x{{/yes}}", view.clone()), "notnone");
+        assert_eq!(
+            r(
+                "{{#yes}}Y{{/yes}}{{#no}}N{{/no}}{{#zero}}Z{{/zero}}",
+                view.clone()
+            ),
+            "Y"
+        );
+        assert_eq!(
+            r(
+                "{{^no}}not{{/no}}{{^empty}}none{{/empty}}{{^yes}}x{{/yes}}",
+                view.clone()
+            ),
+            "notnone"
+        );
         assert_eq!(r("{{#obj}}{{x}}{{/obj}}", view), "y");
     }
 
     #[test]
     fn standalone_lines_are_removed() {
         let view = json!({"items": ["a", "b"]});
-        assert_eq!(r("start\n  {{#items}}\n- {{.}}\n  {{/items}}\nend", view), "start\n- a\n- b\nend");
+        assert_eq!(
+            r("start\n  {{#items}}\n- {{.}}\n  {{/items}}\nend", view),
+            "start\n- a\n- b\nend"
+        );
         assert_eq!(r("x\n{{! comment }}\ny", json!({})), "x\ny");
     }
 
     #[test]
     fn set_delimiters() {
-        assert_eq!(r("{{=<% %>=}}<% name %> {{name}}", json!({"name": "n"})), "n {{name}}");
+        assert_eq!(
+            r("{{=<% %>=}}<% name %> {{name}}", json!({"name": "n"})),
+            "n {{name}}"
+        );
     }
 
     #[test]
@@ -626,6 +659,9 @@ mod tests {
     #[test]
     fn lengths_and_indexes() {
         let view = json!({"s": "abc", "a": [5, 6]});
-        assert_eq!(r("{{s.length}} {{a.length}} {{a.1}} {{s.0}}", view), "3 2 6 a");
+        assert_eq!(
+            r("{{s.length}} {{a.length}} {{a.1}} {{s.0}}", view),
+            "3 2 6 a"
+        );
     }
 }

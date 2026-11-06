@@ -42,7 +42,10 @@ async fn run_managed(
     prompt: &str,
 ) -> Result<ManagedResult, BoxError> {
     let result = tracker
-        .track_metrics_of(|r: &RunnerResult| r.metrics.clone(), || runner.run(prompt, None))
+        .track_metrics_of(
+            |r: &RunnerResult| r.metrics.clone(),
+            || runner.run(prompt, None),
+        )
         .await?;
     let metrics = tracker.get_summary();
 
@@ -94,7 +97,9 @@ pub struct ManagedModel {
 
 impl std::fmt::Debug for ManagedModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ManagedModel").field("ai_config", &self.ai_config).finish()
+        f.debug_struct("ManagedModel")
+            .field("ai_config", &self.ai_config)
+            .finish()
     }
 }
 

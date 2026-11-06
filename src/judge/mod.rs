@@ -152,7 +152,12 @@ impl Judge {
     ///
     /// `sampling_rate` overrides the judge's default rate; an explicit `Some(0.0)`
     /// skips evaluation, only `None` falls back to the default.
-    pub async fn evaluate(&self, input: &str, output: &str, sampling_rate: Option<f64>) -> LdJudgeResult {
+    pub async fn evaluate(
+        &self,
+        input: &str,
+        output: &str,
+        sampling_rate: Option<f64>,
+    ) -> LdJudgeResult {
         let effective_rate = sampling_rate.unwrap_or(self.sample_rate);
         let mut result = LdJudgeResult {
             judge_config_key: Some(self.ai_config.key.clone()),
@@ -186,7 +191,10 @@ impl Judge {
         let response = tracker
             .track_metrics_of(
                 |r: &RunnerResult| r.metrics.clone(),
-                || self.runner.run(&evaluation_input, Some(evaluation_schema())),
+                || {
+                    self.runner
+                        .run(&evaluation_input, Some(evaluation_schema()))
+                },
             )
             .await;
 
@@ -236,7 +244,8 @@ impl Judge {
             .map(|msg| format!("{}: {}", msg.role, msg.content))
             .collect::<Vec<_>>()
             .join("\n");
-        self.evaluate(&input, &response.content, sampling_ratio).await
+        self.evaluate(&input, &response.content, sampling_ratio)
+            .await
     }
 
     fn warn(&self, message: &str) {
@@ -255,7 +264,10 @@ pub fn build_evaluation_input(input: &str, output: &str) -> String {
 /// number within `[0, 1]` and `reasoning` is a string.
 pub fn parse_evaluation_response(data: Option<&Map<String, Value>>) -> Option<(f64, String)> {
     let data = data?;
-    let score = data.get("score")?.as_f64().filter(|s| (0.0..=1.0).contains(s))?;
+    let score = data
+        .get("score")?
+        .as_f64()
+        .filter(|s| (0.0..=1.0).contains(s))?;
     let reasoning = data.get("reasoning")?.as_str()?.to_string();
     Some((score, reasoning))
 }

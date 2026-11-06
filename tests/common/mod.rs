@@ -60,7 +60,10 @@ impl RecordingLogger {
         self.lines.lock().unwrap().clear();
     }
     fn push(&self, level: Level, message: &str) {
-        self.lines.lock().unwrap().push((level, message.to_string()));
+        self.lines
+            .lock()
+            .unwrap()
+            .push((level, message.to_string()));
     }
 }
 
@@ -238,13 +241,22 @@ impl FakeRunner {
     }
 
     pub fn inputs(&self) -> Vec<String> {
-        self.calls.lock().unwrap().iter().map(|(i, _)| i.clone()).collect()
+        self.calls
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|(i, _)| i.clone())
+            .collect()
     }
 }
 
 #[async_trait]
 impl Runner for FakeRunner {
-    async fn run(&self, input: &str, output_type: Option<&Value>) -> Result<RunnerResult, BoxError> {
+    async fn run(
+        &self,
+        input: &str,
+        output_type: Option<&Value>,
+    ) -> Result<RunnerResult, BoxError> {
         self.calls
             .lock()
             .unwrap()
@@ -286,7 +298,11 @@ impl FakeProvider {
 
 #[async_trait]
 impl AiProvider for FakeProvider {
-    async fn create_model(&self, config: ModelConfigRef<'_>, multi_turn: bool) -> Option<Arc<dyn Runner>> {
+    async fn create_model(
+        &self,
+        config: ModelConfigRef<'_>,
+        multi_turn: bool,
+    ) -> Option<Arc<dyn Runner>> {
         self.model_calls
             .lock()
             .unwrap()

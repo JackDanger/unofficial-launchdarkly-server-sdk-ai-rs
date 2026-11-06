@@ -30,7 +30,11 @@ impl Evaluator {
         if self.judges.is_empty() {
             return Vec::new();
         }
-        futures::future::join_all(self.judges.iter().map(|judge| judge.evaluate(input, output, None)))
-            .await
+        futures::future::join_all(
+            self.judges
+                .iter()
+                .map(|judge| judge.evaluate(input, output, None)),
+        )
+        .await
     }
 }

@@ -33,7 +33,10 @@ pub struct Eager<T: Send + 'static> {
 }
 
 impl<T: Send + 'static> Eager<T> {
-    pub(crate) fn spawn(future: impl Future<Output = T> + Send + 'static, fallback: fn() -> T) -> Self {
+    pub(crate) fn spawn(
+        future: impl Future<Output = T> + Send + 'static,
+        fallback: fn() -> T,
+    ) -> Self {
         let state = match tokio::runtime::Handle::try_current() {
             Ok(handle) => EagerState::Spawned(handle.spawn(future)),
             Err(_) => EagerState::Lazy(future.boxed()),

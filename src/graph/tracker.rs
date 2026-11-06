@@ -76,7 +76,12 @@ impl LdGraphTracker {
         context: Context,
     ) -> Result<Self, Error> {
         let payload = decode_token(token)?;
-        let field = |name: &str| payload.get(name).and_then(Value::as_str).map(str::to_string);
+        let field = |name: &str| {
+            payload
+                .get(name)
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        };
         let run_id = field("runId")
             .ok_or_else(|| Error::InvalidResumptionToken("missing runId".to_string()))?;
         let graph_key = field("graphKey")
@@ -144,7 +149,10 @@ impl LdGraphTracker {
             Value::from(self.inner.graph_key.as_str())
         );
         if let Some(variation_key) = &self.inner.variation_key {
-            json.push_str(&format!(",\"variationKey\":{}", Value::from(variation_key.as_str())));
+            json.push_str(&format!(
+                ",\"variationKey\":{}",
+                Value::from(variation_key.as_str())
+            ));
         }
         json.push_str(&format!(",\"version\":{}}}", self.inner.version));
         TOKEN_ENGINE.encode(json)
@@ -165,7 +173,11 @@ impl LdGraphTracker {
     /// shared with [`Self::track_invocation_failure`].
     pub fn track_invocation_success(&self) {
         if self.record_outcome(true, "trackInvocationSuccess") {
-            self.track("$ld:ai:graph:invocation_success", self.track_data_with(json!({})), 1.0);
+            self.track(
+                "$ld:ai:graph:invocation_success",
+                self.track_data_with(json!({})),
+                1.0,
+            );
         }
     }
 
@@ -173,7 +185,11 @@ impl LdGraphTracker {
     /// shared with [`Self::track_invocation_success`].
     pub fn track_invocation_failure(&self) {
         if self.record_outcome(false, "trackInvocationFailure") {
-            self.track("$ld:ai:graph:invocation_failure", self.track_data_with(json!({})), 1.0);
+            self.track(
+                "$ld:ai:graph:invocation_failure",
+                self.track_data_with(json!({})),
+                1.0,
+            );
         }
     }
 
@@ -188,7 +204,11 @@ impl LdGraphTracker {
             }
             summary.duration_ms = Some(duration_ms);
         }
-        self.track("$ld:ai:graph:duration:total", self.track_data_with(json!({})), duration_ms);
+        self.track(
+            "$ld:ai:graph:duration:total",
+            self.track_data_with(json!({})),
+            duration_ms,
+        );
     }
 
     /// Tracks aggregate token usage (`$ld:ai:graph:total_tokens`, metric value = total).
@@ -223,14 +243,20 @@ impl LdGraphTracker {
             }
             summary.path = Some(path.clone());
         }
-        self.track("$ld:ai:graph:path", self.track_data_with(json!({ "path": path })), 1.0);
+        self.track(
+            "$ld:ai:graph:path",
+            self.track_data_with(json!({ "path": path })),
+            1.0,
+        );
     }
 
     /// Tracks a node redirecting to a different target (`$ld:ai:graph:redirect`).
     pub fn track_redirect(&self, source_key: &str, redirected_target: &str) {
         self.track(
             "$ld:ai:graph:redirect",
-            self.track_data_with(json!({ "sourceKey": source_key, "redirectedTarget": redirected_target })),
+            self.track_data_with(
+                json!({ "sourceKey": source_key, "redirectedTarget": redirected_target }),
+            ),
             1.0,
         );
     }

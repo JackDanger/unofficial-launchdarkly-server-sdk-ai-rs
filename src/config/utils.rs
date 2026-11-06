@@ -69,14 +69,23 @@ impl FlagValue {
     pub fn parse(value: &Value) -> Self {
         let empty = Map::new();
         let object = value.as_object().unwrap_or(&empty);
-        let meta = object.get("_ldMeta").and_then(Value::as_object).map(|m| FlagMeta {
-            variation_key: m.get("variationKey").and_then(Value::as_str).map(str::to_string),
-            enabled: m.get("enabled").and_then(Value::as_bool).unwrap_or(false),
-            version: as_version(m.get("version")),
-            mode: m.get("mode").and_then(Value::as_str).map(str::to_string),
-            model_key: m.get("modelKey").and_then(Value::as_str).map(str::to_string),
-            model_version: as_version(m.get("modelVersion")),
-        });
+        let meta = object
+            .get("_ldMeta")
+            .and_then(Value::as_object)
+            .map(|m| FlagMeta {
+                variation_key: m
+                    .get("variationKey")
+                    .and_then(Value::as_str)
+                    .map(str::to_string),
+                enabled: m.get("enabled").and_then(Value::as_bool).unwrap_or(false),
+                version: as_version(m.get("version")),
+                mode: m.get("mode").and_then(Value::as_str).map(str::to_string),
+                model_key: m
+                    .get("modelKey")
+                    .and_then(Value::as_str)
+                    .map(str::to_string),
+                model_version: as_version(m.get("modelVersion")),
+            });
         Self {
             meta,
             model: lenient(object, "model"),
@@ -102,7 +111,13 @@ impl FlagValue {
         if self.tools.is_some() {
             return self.tools.clone();
         }
-        let raw = self.model.as_ref()?.parameters.as_ref()?.get("tools")?.as_array()?;
+        let raw = self
+            .model
+            .as_ref()?
+            .parameters
+            .as_ref()?
+            .get("tools")?
+            .as_array()?;
         let tools: LdTools = raw
             .iter()
             .filter_map(|entry| serde_json::from_value::<LdTool>(entry.clone()).ok())
@@ -152,17 +167,26 @@ pub(crate) fn to_flag_value(config: &LdAiConfigDefaultKind, mode: LdAiConfigMode
     match config {
         LdAiConfigDefaultKind::Completion(c) => {
             put("messages", c.messages.as_ref().map(to_value));
-            put("judgeConfiguration", c.judge_configuration.as_ref().map(to_value));
+            put(
+                "judgeConfiguration",
+                c.judge_configuration.as_ref().map(to_value),
+            );
             put("tools", c.tools.as_ref().map(to_value));
         }
         LdAiConfigDefaultKind::Agent(c) => {
             put("instructions", c.instructions.clone().map(Value::String));
-            put("judgeConfiguration", c.judge_configuration.as_ref().map(to_value));
+            put(
+                "judgeConfiguration",
+                c.judge_configuration.as_ref().map(to_value),
+            );
             put("tools", c.tools.as_ref().map(to_value));
         }
         LdAiConfigDefaultKind::Judge(c) => {
             put("messages", c.messages.as_ref().map(to_value));
-            put("evaluationMetricKey", c.evaluation_metric_key.clone().map(Value::String));
+            put(
+                "evaluationMetricKey",
+                c.evaluation_metric_key.clone().map(Value::String),
+            );
         }
     }
     Value::Object(flag)
@@ -179,9 +203,13 @@ pub(crate) fn from_flag_value(
     evaluator: Evaluator,
 ) -> LdAiConfigKind {
     match flag.mode() {
-        Some("agent") => LdAiConfigKind::Agent(to_agent_config(key, flag, tracker_factory, evaluator)),
+        Some("agent") => {
+            LdAiConfigKind::Agent(to_agent_config(key, flag, tracker_factory, evaluator))
+        }
         Some("judge") => LdAiConfigKind::Judge(to_judge_config(key, flag, tracker_factory)),
-        _ => LdAiConfigKind::Completion(to_completion_config(key, flag, tracker_factory, evaluator)),
+        _ => {
+            LdAiConfigKind::Completion(to_completion_config(key, flag, tracker_factory, evaluator))
+        }
     }
 }
 
@@ -196,7 +224,9 @@ pub(crate) fn create_disabled_config(
         LdAiConfigMode::Agent => {
             LdAiConfigKind::Agent(to_agent_config(key, &disabled, tracker_factory, evaluator))
         }
-        LdAiConfigMode::Judge => LdAiConfigKind::Judge(to_judge_config(key, &disabled, tracker_factory)),
+        LdAiConfigMode::Judge => {
+            LdAiConfigKind::Judge(to_judge_config(key, &disabled, tracker_factory))
+        }
         LdAiConfigMode::Completion => LdAiConfigKind::Completion(to_completion_config(
             key,
             &disabled,

@@ -119,7 +119,11 @@ impl AgentGraphDefinition {
 
     /// Every node with no outgoing edges.
     pub fn terminal_nodes(&self) -> Vec<&AgentGraphNode> {
-        self.inner.nodes.values().filter(|n| n.is_terminal()).collect()
+        self.inner
+            .nodes
+            .values()
+            .filter(|n| n.is_terminal())
+            .collect()
     }
 
     /// The root node; `None` for a disabled graph.
@@ -183,7 +187,12 @@ impl AgentGraphDefinition {
         context
     }
 
-    fn pick_next(order: &[String], visited: &HashSet<String>, degree: &HashMap<String, i64>, skip: Option<&str>) -> Option<String> {
+    fn pick_next(
+        order: &[String],
+        visited: &HashSet<String>,
+        degree: &HashMap<String, i64>,
+        skip: Option<&str>,
+    ) -> Option<String> {
         let candidates = || {
             order
                 .iter()
@@ -331,7 +340,8 @@ impl AgentGraphDefinition {
             }
         }
 
-        let root_deps: IndexSet<String> = order.iter().filter(|k| **k != root_key).cloned().collect();
+        let root_deps: IndexSet<String> =
+            order.iter().filter(|k| **k != root_key).cloned().collect();
         let context = Self::scoped(&initial_execution_context, &root_deps, &results);
         f(root, context);
     }

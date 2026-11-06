@@ -186,7 +186,12 @@ impl LdAiConfigTracker {
         context: Context,
     ) -> Result<Self, Error> {
         let payload = decode_token(token)?;
-        let field = |name: &str| payload.get(name).and_then(Value::as_str).map(str::to_string);
+        let field = |name: &str| {
+            payload
+                .get(name)
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        };
         let run_id = field("runId")
             .ok_or_else(|| Error::InvalidResumptionToken("missing runId".to_string()))?;
         let config_key = field("configKey")
@@ -285,7 +290,11 @@ impl LdAiConfigTracker {
             }
             summary.duration_ms = Some(duration_ms);
         }
-        self.track("$ld:ai:duration:total", self.track_data_value(), duration_ms);
+        self.track(
+            "$ld:ai:duration:total",
+            self.track_data_value(),
+            duration_ms,
+        );
     }
 
     /// Runs `func`, tracking its duration whatever it returns (JavaScript:

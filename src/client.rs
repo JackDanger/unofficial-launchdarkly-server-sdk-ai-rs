@@ -105,7 +105,10 @@ impl LdAiClient {
     }
 
     /// Creates a client that builds runners from `runner_factory`. Sends `$ld:ai:sdk:info`.
-    pub fn with_runner_factory(ld_client: Arc<dyn LdClientMin>, runner_factory: RunnerFactory) -> Self {
+    pub fn with_runner_factory(
+        ld_client: Arc<dyn LdClientMin>,
+        runner_factory: RunnerFactory,
+    ) -> Self {
         let logger = ld_client.logger();
         ld_client.track(
             TRACK_SDK_INFO,
@@ -139,7 +142,8 @@ impl LdAiClient {
     }
 
     fn track_usage(&self, event: &str, context: &Context, data: Value, metric_value: f64) {
-        self.ld_client.track(event, context, Some(data), Some(metric_value));
+        self.ld_client
+            .track(event, context, Some(data), Some(metric_value));
     }
 
     fn interpolate(&self, template: &str, view: &Value) -> String {
@@ -156,7 +160,13 @@ impl LdAiClient {
         }
     }
 
-    fn tracker_factory(&self, key: &str, flag: &FlagValue, context: &Context, graph_key: Option<&str>) -> TrackerFactory {
+    fn tracker_factory(
+        &self,
+        key: &str,
+        flag: &FlagValue,
+        context: &Context,
+        graph_key: Option<&str>,
+    ) -> TrackerFactory {
         let ld_client = Arc::clone(&self.ld_client);
         let context = context.clone();
         let meta = flag.meta.clone().unwrap_or_default();
@@ -165,8 +175,16 @@ impl LdAiClient {
             config_key: key.to_string(),
             variation_key: meta.variation_key.unwrap_or_default(),
             version: meta.version.unwrap_or(1),
-            model_name: flag.model.as_ref().map(|m| m.name.clone()).unwrap_or_default(),
-            provider_name: flag.provider.as_ref().map(|p| p.name.clone()).unwrap_or_default(),
+            model_name: flag
+                .model
+                .as_ref()
+                .map(|m| m.name.clone())
+                .unwrap_or_default(),
+            provider_name: flag
+                .provider
+                .as_ref()
+                .map(|p| p.name.clone())
+                .unwrap_or_default(),
             graph_key: graph_key.map(str::to_string),
             model_key: meta.model_key,
             model_version: meta.model_version.unwrap_or(1),
@@ -246,9 +264,13 @@ impl LdAiClient {
                 LdAiConfigKind::Judge(c)
             }
             LdAiConfigKind::Agent(mut c) => {
-                c.instructions = c
-                    .instructions
-                    .map(|i| if i.is_empty() { i } else { self.interpolate(&i, &view) });
+                c.instructions = c.instructions.map(|i| {
+                    if i.is_empty() {
+                        i
+                    } else {
+                        self.interpolate(&i, &view)
+                    }
+                });
                 LdAiConfigKind::Agent(c)
             }
         }
@@ -335,7 +357,12 @@ impl LdAiClient {
         default_value: Option<LdAiCompletionConfigDefault>,
         default_ai_provider: Option<&str>,
     ) -> LdAiCompletionConfig {
-        self.track_usage(TRACK_USAGE_COMPLETION_CONFIG_TEMPLATE, context, json!(key), 1.0);
+        self.track_usage(
+            TRACK_USAGE_COMPLETION_CONFIG_TEMPLATE,
+            context,
+            json!(key),
+            1.0,
+        );
         let config = self
             .evaluate(EvaluateRequest {
                 key,
@@ -440,7 +467,10 @@ impl LdAiClient {
         }
         let mut extended = variables.cloned().unwrap_or_default();
         extended.insert("message_history".to_string(), json!("{{message_history}}"));
-        extended.insert("response_to_evaluate".to_string(), json!("{{response_to_evaluate}}"));
+        extended.insert(
+            "response_to_evaluate".to_string(),
+            json!("{{response_to_evaluate}}"),
+        );
 
         let config = self
             .evaluate(EvaluateRequest {
@@ -506,7 +536,12 @@ impl LdAiClient {
         context: &Context,
     ) -> IndexMap<String, LdAiAgentConfig> {
         let count = agent_configs.len();
-        self.track_usage(TRACK_USAGE_AGENT_CONFIGS, context, json!(count), count as f64);
+        self.track_usage(
+            TRACK_USAGE_AGENT_CONFIGS,
+            context,
+            json!(count),
+            count as f64,
+        );
         let configs = join_all(agent_configs.iter().map(|request| {
             self.agent_config_inner(
                 &request.key,
@@ -540,8 +575,15 @@ impl LdAiClient {
         sample_rate: f64,
     ) -> Option<Judge> {
         self.track_usage(TRACK_USAGE_CREATE_JUDGE, context, json!(key), 1.0);
-        self.create_judge_instance(key, context, default_value, variables, default_ai_provider, sample_rate)
-            .await
+        self.create_judge_instance(
+            key,
+            context,
+            default_value,
+            variables,
+            default_ai_provider,
+            sample_rate,
+        )
+        .await
     }
 
     fn create_judge_instance<'a>(
@@ -572,7 +614,12 @@ impl LdAiClient {
                     false,
                 )
                 .await?;
-            Some(Judge::new(judge_config, runner, sample_rate, self.logger.clone()))
+            Some(Judge::new(
+                judge_config,
+                runner,
+                sample_rate,
+                self.logger.clone(),
+            ))
         }
         .boxed()
     }
@@ -653,8 +700,16 @@ impl LdAiClient {
 
     /// Reconstructs a config tracker from a resumption token, preserving its `runId`
     /// (JavaScript: `createTracker`).
-    pub fn create_tracker(&self, token: &str, context: &Context) -> Result<LdAiConfigTracker, Error> {
-        LdAiConfigTracker::from_resumption_token(token, Arc::clone(&self.ld_client), context.clone())
+    pub fn create_tracker(
+        &self,
+        token: &str,
+        context: &Context,
+    ) -> Result<LdAiConfigTracker, Error> {
+        LdAiConfigTracker::from_resumption_token(
+            token,
+            Arc::clone(&self.ld_client),
+            context.clone(),
+        )
     }
 
     /// Fetches an agent graph and its node configs (JavaScript: `agentGraph`).
@@ -731,7 +786,8 @@ impl LdAiClient {
             )
         }))
         .await;
-        let fetched: Vec<(String, LdAiAgentConfig)> = all_keys.iter().cloned().zip(configs).collect();
+        let fetched: Vec<(String, LdAiAgentConfig)> =
+            all_keys.iter().cloned().zip(configs).collect();
 
         if let Some((key, _)) = fetched.iter().find(|(_, config)| !config.enabled) {
             debug(format!(
@@ -747,7 +803,11 @@ impl LdAiClient {
 
     /// Reconstructs a graph tracker from a resumption token, preserving its `runId`
     /// (JavaScript: `createGraphTracker`).
-    pub fn create_graph_tracker(&self, token: &str, context: &Context) -> Result<LdGraphTracker, Error> {
+    pub fn create_graph_tracker(
+        &self,
+        token: &str,
+        context: &Context,
+    ) -> Result<LdGraphTracker, Error> {
         LdGraphTracker::from_resumption_token(token, Arc::clone(&self.ld_client), context.clone())
     }
 }

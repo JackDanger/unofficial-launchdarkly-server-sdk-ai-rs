@@ -9,8 +9,11 @@
 //! their prompts with Mustache, and reports the same `$ld:ai:*` events the JavaScript
 //! SDK sends, so LaunchDarkly's AI Config monitoring and judges work unchanged.
 //!
+//! With the default `ld-client` feature, `ld_client` is an
+//! `Arc<launchdarkly_server_sdk::Client>`.
+//!
 //! ```no_run
-//! # async fn demo(ld_client: std::sync::Arc<launchdarkly_server_sdk::Client>) {
+//! # async fn demo(ld_client: std::sync::Arc<impl unofficial_launchdarkly_server_sdk_ai::LdClientMin + 'static>) {
 //! use serde_json::json;
 //! use unofficial_launchdarkly_server_sdk_ai::{init_ai, ContextBuilder, LdAiMetrics};
 //!
@@ -66,14 +69,19 @@ pub use judge::{Evaluator, Judge, LdJudgeResult};
 pub use managed::{ManagedAgent, ManagedAgentGraph, ManagedModel};
 pub use metrics::*;
 pub use model::{JudgeEvaluations, ManagedResult, RunnerResult};
-pub use providers::{AgentGraphRunner, AiProvider, ModelConfigRef, Runner, RunnerFactory, ToolFn, ToolRegistry};
+pub use providers::{
+    AgentGraphRunner, AiProvider, ModelConfigRef, Runner, RunnerFactory, ToolFn, ToolRegistry,
+};
 pub use runtime::Eager;
 pub use sdk_info::{AI_SDK_LANGUAGE, AI_SDK_NAME, AI_SDK_VERSION, PORTED_JS_SDK_VERSION};
 pub use tracker::{Clock, LdAiConfigTracker, LdAiConfigTrackerParams, LdAiTrackData};
 
 /// Renders a Mustache template the way the JavaScript AI SDK does (mustache.js with
 /// HTML escaping disabled). Missing variables render empty.
-pub fn interpolate_template(template: &str, variables: &serde_json::Value) -> Result<String, mustache::TemplateError> {
+pub fn interpolate_template(
+    template: &str,
+    variables: &serde_json::Value,
+) -> Result<String, mustache::TemplateError> {
     mustache::render(template, variables)
 }
 
